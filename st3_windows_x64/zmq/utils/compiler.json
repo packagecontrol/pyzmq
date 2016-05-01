@@ -1,0 +1,16 @@
+{
+  "include_dirs": [
+    "bundled\\zeromq\\include", 
+    "zmq\\utils", 
+    "zmq\\backend\\cython", 
+    "zmq\\devices"
+  ], 
+  "runtime_library_dirs": [], 
+  "library_dirs": [
+    "build\\temp.win-amd64-3.3\\Release\\buildutils"
+  ], 
+  "libraries": [
+    "libzmq"
+  ], 
+  "define_macros": []
+}
