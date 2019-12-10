@@ -1,0 +1,176 @@
+name: build
+
+# on: repository_dispatch
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  linux:
+    # if: github.event.action == 'build'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [i686, x86_64]
+    container: quay.io/pypa/manylinux2010_${{ matrix.arch }}
+    steps:
+      - name: Install Miniconda
+        run: |
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/miniconda.sh
+          else
+            curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86.sh -o /tmp/miniconda.sh
+          fi
+          bash /tmp/miniconda.sh -b -f -p $HOME/miniconda
+      - name: Build
+        run: |
+          export PATH="$HOME/miniconda/bin:$PATH"
+          echo 'allow_conda_downgrades: true' > ~/.condarc
+          # conda config --set allow_conda_downgrades true
+          conda install conda=4.5.12 -y
+          conda create -n py33 python=3.3 -c conda-forge -y
+          source $HOME/miniconda/bin/activate py33
+          # pip install pip==10
+          # pip download --python-version 33 --no-deps pyzmq
+          # or a specific version
+          pip download pyzmq==18.1.1
+          TAR=$(echo pyzmq*.tar.gz)
+          tar xzf $TAR
+          cd ${TAR%.tar.gz}
+          python setup.py bdist_wheel
+          mkdir -p /tmp/pyzmq
+          LICENSE=$(echo LICENS*) && [ -f "$LICENSE" ] && cp "$LICENSE" /tmp/pyzmq
+          cd dist
+          WHL=$(echo pyzmq*.whl)
+          unzip -d /tmp/pyzmq $WHL
+          rm -rf /tmp/pyzmq/*.dist-info
+      - name: patchelf
+        run: |
+          find /tmp/pyzmq -name *.so -exec patchelf --remove-needed libpython3.3m.so.1.0 {} \;
+      - name: Push to branch
+        run: |
+          git config --global user.email bot@packagecontrol.github.io
+          git config --global user.name packagecontrol
+          git clone https://${{github.actor}}:${{secrets.GITHUB_PAT}}@github.com/${{github.repository}}.git project
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            ARCH="x64"
+          else
+            ARCH="x32"
+          fi
+          cd project
+          git checkout -b "st3_linux_$ARCH"
+          rm -rf "st3_linux_$ARCH"
+          mkdir -p "st3_linux_$ARCH"
+          cp -r /tmp/pyzmq/* "st3_linux_$ARCH/"
+          git add -A
+          git commit -m "build st3_linux_$ARCH"
+          git push -f -u origin st3_linux_$ARCH
+
+  macos:
+    # if: github.event.action == 'build'
+    runs-on: macOS-latest
+    steps:
+      - run: |
+          xcode-select -p
+          clang -print-resource-dir
+          clang -v -fsyntax-only -x c++ /dev/null
+      - name: Install Miniconda
+        run: |
+          curl -L https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o /tmp/miniconda.sh
+          bash /tmp/miniconda.sh -b -f -p $HOME/miniconda
+      - name: Build
+        run: |
+          export MACOSX_DEPLOYMENT_TARGET=10.9
+          export CPATH=`xcrun --show-sdk-path`/usr/include
+          export PATH="$HOME/miniconda/bin:$PATH"
+          echo 'allow_conda_downgrades: true' > ~/.condarc
+          # conda config --set allow_conda_downgrades true
+          conda install conda=4.5.12 -y
+          conda create -n py33 python=3.3 -c conda-forge -y
+          source $HOME/miniconda/bin/activate py33
+          # pip install pip==10
+          # pip download --python-version 33 --no-deps pyzmq
+          # or a specific version
+          pip download pyzmq==18.1.1
+          TAR=$(echo pyzmq*.tar.gz)
+          tar xzf $TAR
+          cd ${TAR%.tar.gz}
+          python setup.py bdist_wheel
+          mkdir -p /tmp/pyzmq
+          LICENSE=$(echo LICENS*) && [ -f "$LICENSE" ] && cp "$LICENSE" /tmp/pyzmq
+          cd dist
+          WHL=$(echo pyzmq*.whl)
+          unzip -d /tmp/pyzmq $WHL
+          rm -rf /tmp/pyzmq/*.dist-info
+      - name: Push to branch
+        run: |
+          git config --global user.email bot@packagecontrol.github.io
+          git config --global user.name packagecontrol
+          git clone https://${{github.actor}}:${{secrets.GITHUB_PAT}}@github.com/${{github.repository}}.git project
+          cd project
+          git checkout -b "st3_osx_x64"
+          rm -rf "st3_osx_x64"
+          mkdir -p "st3_osx_x64"
+          cp -r /tmp/pyzmq/* "st3_osx_x64/"
+          git add -A
+          git commit -m "build st3_osx_x64"
+          git push -f -u origin st3_osx_x64
+
+  windows:
+    # if: github.event.action == 'build'
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x32, x64]
+    steps:
+      - name: Setup Miniconda
+        run: |
+          $ErrorActionPreference = "Continue"
+          $env:PATH = "$env:CONDA;$env:CONDA\Scripts;$env:PATH"
+          conda init powershell
+      - name: Build
+        run: |
+          $ErrorActionPreference = "Continue"
+          conda config --set allow_conda_downgrades true
+          conda install conda=4.5.12 -y
+          If ('${{ matrix.arch }}' -eq 'x32') {
+            $env:CONDA_FORCE_32BIT = 1
+          }
+          conda create -n py33 python=3.3 -c conda-forge -y
+          conda activate py33
+          # python -m pip install pip==10
+          # pip download --python-version 33 --no-deps pyzmqm
+          # or a specific version
+          pip download pyzmq==18.1.1
+          $TAR = $(Get-ChildItem pyzmq*tar.gz).name
+          tar xzf $TAR
+          cd $($TAR -replace ".tar.gz", "")
+          $env:VS100COMNTOOLS = $env:VS140COMNTOOLS
+          python setup.py bdist_wheel
+      - name: Push to branch
+        run: |
+          TAR=$(echo pyzmq*.tar.gz)
+          cd ${TAR%.tar.gz}
+          mkdir -p /tmp/pyzmq
+          LICENSE=$(echo LICENS*) && [ -f "$LICENSE" ] && cp "$LICENSE" /tmp/pyzmq
+          cd dist
+          WHL=$(echo pyzmq*.whl)
+          unzip -d /tmp/pyzmq $WHL
+          rm -rf /tmp/pyzmq/*.dist-info
+          git config --global user.email bot@packagecontrol.github.io
+          git config --global user.name packagecontrol
+          git clone https://${{github.actor}}:${{secrets.GITHUB_PAT}}@github.com/${{github.repository}}.git project
+          ARCH=${{ matrix.arch }}
+          cd project
+          git checkout -b "st3_windows_$ARCH"
+          rm -rf "st3_windows_$ARCH"
+          mkdir -p "st3_windows_$ARCH"
+          cp -r /tmp/pyzmq/* "st3_windows_$ARCH/"
+          git add -A
+          git commit -m "build st3_windows_$ARCH"
+          git push -f -u origin st3_windows_$ARCH
+        shell:
+          bash
