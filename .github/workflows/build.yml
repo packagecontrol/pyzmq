@@ -1,14 +1,10 @@
 name: build
 
-# on: repository_dispatch
-on:
-  push:
-    branches:
-      - master
+on: repository_dispatch
 
 jobs:
   linux:
-    # if: github.event.action == 'build'
+    if: github.event.action == 'build'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -69,7 +65,7 @@ jobs:
           git push -f -u origin st3_linux_$ARCH
 
   macos:
-    # if: github.event.action == 'build'
+    if: github.event.action == 'build'
     runs-on: macOS-latest
     steps:
       - run: |
@@ -119,7 +115,7 @@ jobs:
           git push -f -u origin st3_osx_x64
 
   windows:
-    # if: github.event.action == 'build'
+    if: github.event.action == 'build'
     runs-on: windows-latest
     strategy:
       fail-fast: false

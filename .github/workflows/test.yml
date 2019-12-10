@@ -1,0 +1,69 @@
+name: test
+
+on:
+  push:
+    branches:
+      - master
+      - st3_linux_x32
+      - st3_linux_x64
+      - st3_osx_x64
+      - st3_windows_x32
+      - st3_windows_x64
+
+jobs:
+  linux:
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/st3_linux')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x32, x64]
+    container: sublimetext/unittesting:${{ matrix.arch }}
+    env:
+      SUBLIME_TEXT_ARCH: ${{ matrix.arch }}
+      UNITTESTING_TAG: master
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup
+        run: |
+          sh -e /etc/init.d/xvfb start
+          curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.sh
+      - name: Run tests
+        run: |
+          PATH="$HOME/.local/bin:$PATH"
+          sh github.sh bootstrap
+          sh github.sh run_tests --coverage
+
+  macos:
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/st3_osx')
+    runs-on: macOS-latest
+    env:
+      UNITTESTING_TAG: master
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup
+        run: curl -OL https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.sh
+      - name: Run tests
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          sh github.sh bootstrap
+          sh github.sh run_tests --coverage
+
+  windows:
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/st3_windows')
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x32, x64]
+    env:
+      SUBLIME_TEXT_ARCH: ${{ matrix.arch }}
+      UNITTESTING_TAG: master
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup
+        run:  Invoke-WebRequest -Uri "https://raw.githubusercontent.com/SublimeText/UnitTesting/master/sbin/github.ps1" -OutFile "github.ps1"
+      - name: Run tests
+        run: |
+          ./github.ps1 "bootstrap" -verbose
+          ./github.ps1 "run_tests" -coverage -verbose
