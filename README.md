@@ -50,24 +50,8 @@ See also:
 
 ## Contributions
 
-
 The files were built by github [workflows][].
 
-### Personal access token
-
-The secret `${{ secrets.GITHUB_TOKEN }}` does not have the necessary permission
-to perform some of the jobs. Please following github instruction to
-generate a PAT and put it as secret `GITHUB_PAT`.
-
-### Trigger build manually
-
-The `build` workflow could be triggered by the following request.
-```bash
-curl -i -H "authorization: Bearer $GITHUB_PAT" \
-   -H 'Accept: application/vnd.github.everest-preview+json' \
-   -d '{"event_type": "build"}' \
-   https://api.github.com/repos/packagecontrol/pyzmq/dispatches
-```
 
 ## License
 

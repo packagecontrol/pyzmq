@@ -4,15 +4,9 @@ on:
   push:
     branches:
       - master
-      - st3_linux_x32
-      - st3_linux_x64
-      - st3_osx_x64
-      - st3_windows_x32
-      - st3_windows_x64
 
 jobs:
   linux:
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/st3_linux')
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -35,7 +29,6 @@ jobs:
           sh github.sh run_tests --coverage
 
   macos:
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/st3_osx')
     runs-on: macOS-latest
     env:
       UNITTESTING_TAG: master
@@ -50,7 +43,6 @@ jobs:
           sh github.sh run_tests --coverage
 
   windows:
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/st3_windows')
     runs-on: windows-latest
     strategy:
       fail-fast: false

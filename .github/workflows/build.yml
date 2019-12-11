@@ -1,10 +1,14 @@
 name: build
 
-on: repository_dispatch
+on:
+  push:
+    paths:
+      - .github/workflows/build.yml
+    branches:
+      - master
 
 jobs:
   linux:
-    if: github.event.action == 'build'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -65,7 +69,6 @@ jobs:
           git push -f -u origin st3_linux_$ARCH
 
   macos:
-    if: github.event.action == 'build'
     runs-on: macOS-latest
     steps:
       - name: Install Miniconda
@@ -111,7 +114,6 @@ jobs:
           git push -f -u origin st3_osx_x64
 
   windows:
-    if: github.event.action == 'build'
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -134,7 +136,7 @@ jobs:
           conda create -n py33 python=3.3 -c conda-forge -y
           conda activate py33
           # python -m pip install pip==10
-          # pip download --python-version 33 --no-deps pyzmqm
+          # pip download --python-version 33 --no-deps pyzmq
           # or a specific version
           pip download pyzmq==18.1.1
           $TAR = $(Get-ChildItem pyzmq*tar.gz).name
