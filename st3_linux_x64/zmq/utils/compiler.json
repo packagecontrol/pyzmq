@@ -1,10 +1,4 @@
 {
-  "include_dirs": [
-    "bundled/zeromq/include", 
-    "zmq/utils", 
-    "zmq/backend/cython", 
-    "zmq/devices"
-  ], 
   "libraries": [], 
   "define_macros": [
     [
@@ -12,6 +6,12 @@
       1
     ]
   ], 
-  "library_dirs": [], 
-  "runtime_library_dirs": []
+  "include_dirs": [
+    "bundled/zeromq/include", 
+    "zmq/utils", 
+    "zmq/backend/cython", 
+    "zmq/devices"
+  ], 
+  "runtime_library_dirs": [], 
+  "library_dirs": []
 }
