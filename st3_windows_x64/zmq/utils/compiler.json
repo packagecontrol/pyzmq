@@ -1,19 +1,19 @@
 {
-  "library_dirs": [
-    "build\\temp.win-amd64-3.3\\Release\\buildutils"
-  ], 
+  "define_macros": [], 
   "include_dirs": [
     "bundled\\zeromq\\include", 
     "zmq\\utils", 
     "zmq\\backend\\cython", 
     "zmq\\devices"
   ], 
-  "runtime_library_dirs": [], 
-  "define_macros": [], 
+  "library_dirs": [
+    "build\\temp.win-amd64-3.3\\Release\\buildutils"
+  ], 
   "libraries": [
     "libzmq", 
     "ws2_32", 
     "iphlpapi", 
     "advapi32"
-  ]
+  ], 
+  "runtime_library_dirs": []
 }
