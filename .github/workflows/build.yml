@@ -68,10 +68,6 @@ jobs:
     if: github.event.action == 'build'
     runs-on: macOS-latest
     steps:
-      - run: |
-          xcode-select -p
-          clang -print-resource-dir
-          clang -v -fsyntax-only -x c++ /dev/null
       - name: Install Miniconda
         run: |
           curl -L https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o /tmp/miniconda.sh
